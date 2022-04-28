@@ -1,4 +1,4 @@
-﻿
+
 $path = "C:\RFRC\rr\Results\beginning of time\" 
 cd $path
 $files = (ls).Name
@@ -6,7 +6,7 @@ foreach ($file in $files) {
     $info = Get-Content $file | ConvertFrom-Json
     $races = $info.sessions.type
     $players = $info.sessions.players
-    $Series = "allSeries","csv" -join "."
+    $Series = "allSeries"#,"csv" -join "."
 
     # basic details
     $Server = $info.Server
@@ -78,8 +78,8 @@ foreach ($file in $files) {
 
     #$report = $Null
 
-
-    $report | Export-Csv -path .\$series -Append
+    $test = New-ConditionalFormattingIconSet -Range "J:J" -Conditionalformat ThreeIconSet -icontype symbols
+    $report | Export-Excel -Path .\$Series -Append -AutoSize -Conditionalformat $test
     #$report 
 
     #$report # = $Null
@@ -122,7 +122,7 @@ foreach ($file in $files) {
         $report1 += $details  
     }              
              
-    $report1 | Export-Csv -path .\$Series -Append
+    $report1 | Export-Excel -Path .\$Series -Append 
     ##$test = 1, 2, 3, 4
     #$test | Measure-Object -Average
 
@@ -157,5 +157,5 @@ foreach ($file in $files) {
              
     #$report2
 
-    $report2 | Export-Csv -Path .\$Series -Append
+    $report2 | Export-Excel -Path .\$Series -Append -Title "TheRFRCStatistics" -TableName processes -FreezeTopRow
 }
