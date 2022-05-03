@@ -1,12 +1,13 @@
-
-$path = "C:\RFRC\rr\Results\beginning of time\" 
-cd $path
+$path = pwd
+$gotopath = $path.path + "\samplefiles\"
+#$path = "C:\RFRC\rr\Results\beginning of time\" 
+cd $gotopath
 $files = (ls).Name
 foreach ($file in $files) {
     $info = Get-Content $file | ConvertFrom-Json
     $races = $info.sessions.type
     $players = $info.sessions.players
-    $Series = "allSeries"#,"csv" -join "."
+    $Series = "allSeries","xlsx" -join "."
 
     # basic details
     $Server = $info.Server
@@ -46,8 +47,10 @@ foreach ($file in $files) {
         $QIncidentstotal = ($qracer.RaceSessionLaps.incidents.Points | Measure-Object -Sum).sum
         $SessionLaps = $qracer.RaceSessionLaps.time
         $qracerinc = $qracer.RaceSessionLaps.Incidents
-        $QBestlap = $qracer.BestLapTime
-        $lapstimetotal = $qracer.totaltime
+        $QBestlap = [timespan]::FromMilliSeconds($qracer.BestLapTime) 
+        $QBLmincalc = ("{0:mm\:ss\:fff}" -f $QBestlap)
+        $lapstimetotal = [timespan]::FromMilliSeconds($qracer.totaltime)
+        $lapstimetotalcalc = ("{0:mm\:ss\:fff}" -f $lapstimetotal)
 
         foreach ($entry in $qracerinc) {
             $incUserId = $entry.otherUserID
@@ -65,9 +68,9 @@ foreach ($file in $files) {
                         FinPosition = $qracer.position
                         StartPosition = $qracer.Startposition
                         Laps = $SessionLaps.count
-                        BestLap = $QBestlap
+                        BestLap = $QBLmincalc
                         Incidents = $QIncidentstotal
-                        Totaltime = $lapstimetotal
+                        Totaltime = $lapstimetotalcalc
                         #LapAvg = $QLapavg
                         #Totallaptime = $lapstimetotal
                     
@@ -79,7 +82,7 @@ foreach ($file in $files) {
     #$report = $Null
 
     $test = New-ConditionalFormattingIconSet -Range "J:J" -Conditionalformat ThreeIconSet -icontype symbols
-    $report | Export-Excel -Path .\$Series -Append -AutoSize -Conditionalformat $test
+    $report | Export-Excel -Path .\$Series -Append -AutoSize -Conditionalformat $test -TableName processes -FreezeTopRow
     #$report 
 
     #$report # = $Null
@@ -89,7 +92,12 @@ foreach ($file in $files) {
     foreach ($r1racer in $Race1Race) {
 
         $rLaps = $r1racer.RaceSessionLaps.time.Count
-        $Bestlap = $r1racer.BestLapTime
+        
+        $R1Bestlap = [timespan]::FromMilliSeconds($r1racer.BestLapTime) 
+        $R1BLmincalc = ("{0:mm\:ss\:fff}" -f $R1Bestlap)
+        $lapstimetotal = [timespan]::FromMilliSeconds($r1racer.totaltime)
+        $lapstimetotalcalc = ("{0:mm\:ss\:fff}" -f $lapstimetotal)
+        
         $rtotaltime = $r1racer.TotalTime
         $rIncidents = ($r1racer.RaceSessionLaps.incidents.points | Measure-Object -Sum).sum
     
@@ -100,7 +108,7 @@ foreach ($file in $files) {
             $incUserId = $r1racer.RaceSessionLaps.Incidents.OtherUserId
             $incuser = $Race1Race | Where-Object {$_.UserId -contains $incuserid}
             $blame = $incUser.fullname
-    
+            
     }       
         
             $details = [pscustomobject]@{
@@ -112,8 +120,8 @@ foreach ($file in $files) {
                 FinPosition = $r1racer.position
                 StartPosition = $r1racer.Startposition
                 #AvgTime = $lap % 60000 % $SessionLaps
-                BestLap = $Bestlap
-                Totaltime = $rtotaltime
+                BestLap = $R1BLmincalc
+                Totaltime = $lapstimetotalcalc
                 Incidents = $rIncidents
                 Laps = $rLaps
             
@@ -132,9 +140,11 @@ foreach ($file in $files) {
         $Incidents = $r2racer.RaceSessionLaps.incidents.Points
         $rLaps = $r2racer.RaceSessionLaps.time.Count
         $SessionSectors = $r2racer.RaceSessionLaps.sectortimes
-        $Bestlap = $r2racer.BestLapTime
+        $R2Bestlap = [timespan]::FromMilliSeconds($r2racer.BestLapTime)
+        $R2BLmincalc = ("{0:mm\:ss\:fff}" -f $R2Bestlap)
+        $lapstimetotal = [timespan]::FromMilliSeconds($R2racer.totaltime)
+        $lapstimetotalcalc = ("{0:mm\:ss\:fff}" -f $lapstimetotal)
         #$Lapavg = ($SessionLaps | Measure-Object -Average).Average
-        $rtotaltime = $r2racer.TotalTime
         $rIncidents = ($r2racer.RaceSessionLaps.incidents.points | Measure-Object -Sum).sum
         #$SessionSectors
             $details = [pscustomobject]@{
@@ -146,8 +156,8 @@ foreach ($file in $files) {
                 FinPosition = $r2racer.position
                 StartPosition = $r2racer.Startposition
                 #AvgTime = $lap % 60000 % $SessionLaps
-                BestLap = $Bestlap
-                Totaltime = $rtotaltime
+                BestLap = $R2BLmincalc
+                Totaltime = $lapstimetotalcalc
                 Incidents = $rIncidents
                 Laps = $rLaps
                 #LapAvg = $rtotaltime % $SessionLaps.Count
@@ -157,5 +167,5 @@ foreach ($file in $files) {
              
     #$report2
 
-    $report2 | Export-Excel -Path .\$Series -Append -Title "TheRFRCStatistics" -TableName processes -FreezeTopRow
+    $report2 | Export-Excel -Path .\$Series -Append
 }
